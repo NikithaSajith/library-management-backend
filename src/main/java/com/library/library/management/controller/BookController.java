@@ -1,10 +1,8 @@
 package com.library.library.management.controller;
 
 import com.library.library.management.entity.Book;
-import com.library.library.management.repository.BookRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.library.library.management.service.BookService;
 import org.springframework.http.ResponseEntity;
-
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,46 +12,46 @@ import java.util.List;
 @RequestMapping("/api/books")
 public class BookController {
 
-    @Autowired
-    private BookRepository bookRepository;
+    private final BookService bookService;
 
+    // Constructor Injection
+    public BookController(BookService bookService) {
+        this.bookService = bookService;
+    }
+
+    // Add a new book
     @PostMapping
-    public Book addBook(@RequestBody Book book) {
-        return bookRepository.save(book);
+    public ResponseEntity<Book> addBook(@RequestBody Book book) {
+        Book savedBook = bookService.addBook(book);
+        return ResponseEntity.ok(savedBook);
     }
 
+    // Get all books
     @GetMapping
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+    public ResponseEntity<List<Book>> getAllBooks() {
+        return ResponseEntity.ok(bookService.getAllBooks());
     }
 
+    // Borrow or return a book
     @PutMapping("/{id}/borrow")
     public ResponseEntity<?> borrowBook(
             @PathVariable Long id,
             @RequestParam String username) {
-        Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        // Book already borrowed by someone else
-        if (book.getBorrowedBy() != null &&
-                !book.getBorrowedBy().equals(username)) {
-            return ResponseEntity
-                    .status(409)
-                    .body("Book already borrowed by another user");
+        try {
+            Book updatedBook = bookService.borrowOrReturnBook(id, username);
+            return ResponseEntity.ok(updatedBook);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(409).body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
         }
-
-        // Toggle borrow / return
-        book.setBorrowedBy(
-                book.getBorrowedBy() == null ? username : null);
-
-        Book saved = bookRepository.save(book);
-        return ResponseEntity.ok(saved);
     }
 
+    // Delete a book
     @DeleteMapping("/{id}")
-    public String deleteBook(@PathVariable Long id) {
-        bookRepository.deleteById(id);
-        return "Book deleted with id " + id;
+    public ResponseEntity<String> deleteBook(@PathVariable Long id) {
+        bookService.deleteBook(id);
+        return ResponseEntity.ok("Book deleted with id " + id);
     }
-
 }
