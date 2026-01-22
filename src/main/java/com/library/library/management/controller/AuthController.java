@@ -12,46 +12,46 @@ import com.library.library.management.repository.UserRepository;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin
+@CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-@PostMapping("/login")
-public User login(@RequestBody User loginRequest) {
+    public AuthController(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
-    String username = loginRequest.getUsername();
-    String password = loginRequest.getPassword();
+    @PostMapping("/login")
+    public User login(@RequestBody User loginRequest) {
 
-    // 🔍 Check if user already exists
-    User user = userRepository.findByUsername(username).orElse(null);
+        String username = loginRequest.getUsername();
+        String password = loginRequest.getPassword();
 
-    // 🆕 NEW USER → AUTO REGISTER
-    if (user == null) {
+        User user = userRepository
+                .findByUsernameAndStatus(username, 0)
+                .orElse(null);
 
-        // ❌ Do NOT allow new admins
-        if ("ADMIN".equalsIgnoreCase(loginRequest.getRole())) {
-            throw new RuntimeException("Admin already exists");
+        // AUTO REGISTER ONLY NORMAL USERS
+        if (user == null) {
+
+            if ("ADMIN".equalsIgnoreCase(loginRequest.getRole())) {
+                throw new RuntimeException("Admin already exists");
+            }
+
+            User newUser = new User();
+            newUser.setUsername(username);
+            newUser.setPassword(password);
+            newUser.setRole("USER");
+            newUser.setStatus(0);
+
+            return userRepository.save(newUser);
         }
 
-        User newUser = new User();
-        newUser.setUsername(username);
-        newUser.setPassword(password);
-        newUser.setRole("USER");
+        // PASSWORD CHECK
+        if (!user.getPassword().equals(password)) {
+            throw new RuntimeException("Invalid password");
+        }
 
-        return userRepository.save(newUser);
+        return user;
     }
-
-    // 🔐 EXISTING USER → PASSWORD CHECK
-    if (!user.getPassword().equals(password)) {
-        throw new RuntimeException("Invalid password");
-    }
-
-    return user;
 }
-
-
-
-}
-

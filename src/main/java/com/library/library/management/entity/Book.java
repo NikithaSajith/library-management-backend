@@ -14,13 +14,16 @@ public class Book {
     private String name;
 
     @Column(nullable = false)
-    private String author;
-
-    @Column(nullable = false)
     private String category;
 
     @Column(nullable = false)
+    private String author;
+
+    @Column(nullable = false)
     private String publisher;
+
+    @Column(nullable = false)
+    private Integer status = 0; // 0 = active, 1 = deleted
 
     private String borrowedBy;
 
@@ -72,6 +75,14 @@ public class Book {
 
     public void setPublisher(String publisher) {
         this.publisher = publisher;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 
     public String getBorrowedBy() {

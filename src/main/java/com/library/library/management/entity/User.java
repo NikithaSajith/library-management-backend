@@ -19,6 +19,9 @@ public class User {
     @Column(nullable = false)
     private String role; // ADMIN or USER
 
+    @Column(nullable = false)
+    private Integer status = 0; // 0 = active, 1 = deleted
+
     // ✅ GETTERS & SETTERS
     public Long getId() { return id; }
 
@@ -30,4 +33,12 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+     public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
 }
